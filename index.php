@@ -1,48 +1,58 @@
 <?php
-
 session_start();
 include 'koneksi.php';
 
-if(!isset($_SESSION['username'])){
-    header("location:login.php?login_dulu");
-    exit;
+if(!isset($_SESSION['id_user'])){
+    header("location:login.php?login_dulu!");
 }
 
 $id_user = $_SESSION['id_user'];
 
-if(isset($_GET['filter_category']) && $_GET['filter_category'] != ""){
-    $id_category = $_GET['filter_category'];
-    $sqlTodo = "SELECT t.*, c.category_name FROM todo t
-                LEFT JOIN category c ON
-                t.id_category = c.id_category
-                WHERE t.id_user = '$id_user'
-                AND t.id_category = '$id_category'
-                ORDER BY t.id_todo DESC";
-}else {
-    $sqlTodo = "SELECT t.*, c.category_name FROM todo t
-                LEFT JOIN category c ON
-                t.id_category = c.id_category
-                WHERE t.id_user = '$id_user'
-                ORDER BY t.id_todo DESC";
+if(isset($_GET['filter-category']) && isset($_GET['filter-status'])){ // ada inputan dari filter category & status
+
+    $id_category = $_GET['filter-category'];
+    $status = $_GET['filter-status'];
+
+    if(isset($_GET['filter-bookmark'])){ # ---> kalau ada inputan dari filter bookmark
+        $isFavorite = $_GET['filter-bookmark'];
+    }else { # ---> jika tidak,
+        $isFavorite = 0;
+    }
+
+ 
+
+    if($id_category != '' && $status != ''){ # --->  dipilih, makeduanyaka menampilkan spesifik
+        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+        t.id_category = c.id_category  WHERE id_user = '$id_user' AND t.id_category = '$id_category' AND status = '$status' AND isFavorite = '$isFavorite'";
+        
+    }elseif ($id_category == '' && $status != ''){ # --> category tidak dipilih maka output tidak memandang category
+        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND status = '$status' AND isFavorite = '$isFavorite'";
+
+    }elseif ($status == '' && $id_category != '') { # --> status tidak dipilih maka output tidak memandang status
+        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND t.id_category = '$id_category' AND isFavorite = '$isFavorite'";
+
+
+    }elseif ($id_category == '' && $status == '') { # --> kedua tidak dipilih, maka output menampilkan semuanya
+        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND isFavorite = '$isFavorite'";
+
+    }else {
+        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+        t.id_category = c.id_category WHERE id_user = '$id_user'";  
+    }
+    
+}else{
+    $sql = "SELECT t.*, category FROM todo t JOIN category c ON
+    t.id_category = c.id_category WHERE id_user = '$id_user'";
 }
 
-if (isset($_POST['id_todo'])) {
-    $id_todo = $_POST['id_todo'];
 
-    $sql = "UPDATE todo
-            SET status = IF(status='pending','done','pending')
-            WHERE id_todo = '$id_todo'";
+$queryTodo = mysqli_query($koneksi, $sql);
 
-    mysqli_query($koneksi, $sql);
-
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-$queryTodo = mysqli_query($koneksi, $sqlTodo);
-
-$sqlCategory = "SELECT * FROM category";
-$queryCategory = mysqli_query($koneksi, $sqlCategory);
+$queryCategory = mysqli_query($koneksi, "SELECT * FROM category");
+$queryStatus = mysqli_query($koneksi, "SELECT status FROM todo");
 
 ?>
 
@@ -51,96 +61,91 @@ $queryCategory = mysqli_query($koneksi, $sqlCategory);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>To Do List</title>
+    <title>Document</title>
 </head>
 <body>
+    <?php include 'navbar.php'?>
+    <main>
+        <section class = "hero">
+            <article>
+                <!-- <div class="btn-success">
+                    <button onclick = "window.print()">Print</button>
+                </div> -->
 
-    <header>
-        <section class = "navbar">
-            <ul>
-                <div class="logo">
-                    <li>
-                        <a href="index.php"><img src="" alt="logo"></a>
-                    </li>
+                <div class="filter">
+                    
+                    <form method="get">
+                        <select name="filter-category">
+                            <option value="">Semua</option>
+                        <?php while($c = mysqli_fetch_assoc($queryCategory)) { ?>
+                            <option value="<?= $c['id_category']?>">
+                            <?= $c['category']?>
+                            </option>
+                        <?php } ?>
+                        </select>
+                        <select name="filter-status">
+                            <option value="">Semua</option>
+                            <option value="pending">Pending</option>
+                            <option value="done">Done</option>
+                        </select>
+                        <label for="">Favorit</label>
+                        <input type="checkbox" name="filter-bookmark" value= "1">
+                        <input type="submit" value="filter" class = "btn-primary">
+                    </form>
                 </div>
 
-                <li><a href="profil.php">Profil</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            </ul>
+                <center>
+                <div class="btn-success">
+                    <a href="tambah.php">[+] Tambah</a>
+                </div>
+                </center>
+            </article>
         </section>
-    </header>
 
-    <main>
-        <div class="hero-grid">
-            <div class = "username">
-                <p><?=$_SESSION['username']?></p>
-            </div>
-            <section class = "hero">
-                <article class = "title">
-                    <header class = "title">
-                        <h1>To Do list App</h1>
-                    </header>
-                </article>
-
-                <article class = "menu">
-                    <div class="btn_tambah">
-                        <a href="tambah.php">[+] Tambah</a>
-                    </div>
-
-                    <div class="filter-kategori">
-                        <form method="GET">
-                            <select name="filter_category" onchange="this.form.submit()"> <!-- ketika di klik, otomatis submit -->
-                                <option value="">Semua</option>
-                                <?php while($c = mysqli_fetch_assoc($queryCategory)) { ?>
-                                    <option value="<?= $c['id_category']?>"
-                                    <?= isset($_GET['filter_category']) && $_GET['filter_category'] == $c['id_category'] ? 'selected' : '' ?>>
-                                    <?= $c['category_name']?>
-                                </option>
-                                <?php } ?>
-                            </select>
-                        </form>
-                    </div>
-
-                    <div class="print">
-                        <button class = "btn_print" onclick="window.print()">Print</button>
-                    </div>
-                </article>
-            </section>
-        </div>    
-
-        <section class = "todolist">
+        <section class = "todo">
             <div class="card-grid">
-                <?php while($todo = mysqli_fetch_assoc($queryTodo)) {?>
-                <article class = "card-todo <?= $todo['status'] == 'done' ? 'done' : '' ?>">
-                    <form  method="POST">
-                        <input type="hidden" name="id_todo" value="<?= $todo['id_todo'] ?>">
-                        <input 
-                            type="checkbox" 
-                            onchange="this.form.submit()"
-                            <?= $todo['status'] == 'done' ? 'checked' : '' ?>
-                        >
-                    </form>
-
-                    <h5><strong><?= $todo['title'] ?></strong></h5>
+                <?php while($t = mysqli_fetch_assoc($queryTodo)){ ?>
+                <article class = "card-<?= $t['status']?>">
+                    <div class="card-title">
+                        <h3><?= $t['title'] ?></h3>
+                        
+                    </div>
+                    
                     <hr>
-                    <small><?= $todo['description'] ?></small><br>
-                    <p><strong>Status : </strong><?= $todo['status']?></p>
-                    <p><strong>Category : </strong><?= $todo['category_name']?></p>
-                            
+                    <div class="card-desc">
+                        <small><?= $t['description']?></small><br>
+                    </div>
+                   
+                    <div class="card-p">
+                        <p><strong>Category: </strong><?= $t['category']?></p>
+                        <p><strong>Status: </strong><?= $t['status']?></p><br>
+                    </div>
+                    
                     <div class="card-footer">
                         <div class="btn-primary">
-                            <a href="edit.php">Edit</a>
+                            <a href="edit.php?id_todo=<?= $t['id_todo']?>">Edit</a>
                         </div>
+
                         <div class="btn-danger">
-                            <a href="hapus.php">Hapus</a>
+                            <a href="hapus.php?id_todo=<?= $t['id_todo']?>">Hapus</a>
                         </div>
+
+                        <?php if ($t['isFavorite'] == 0){ ?>
+                            <div class="btn-favorite">
+                                <a href="tambah_favorit.php?id_todo=<?= $t['id_todo']?>&isFavorite=1">🤍</a>
+                            </div>
+                        <?php }else{?>
+                            <div class="btn-favorite">
+                                <a href="tambah_favorit.php?id_todo=<?= $t['id_todo']?>&isFavorite=0">💝</a>
+                            </div>
+                        <?php } ?>
+                        
                     </div>
+                    
                 </article>
-                <?php }?>
+                <?php } ?>
             </div>
         </section>
     </main>
-    <script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

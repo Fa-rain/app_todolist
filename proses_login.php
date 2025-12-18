@@ -1,31 +1,29 @@
 <?php
+
 session_start();
 include 'koneksi.php';
 
-if($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+$username = $_POST['username'];
+$password =$_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE username = '$username' AND password = '$password'";
-    $query = mysqli_query($koneksi, $sql);
+$query = mysqli_query($koneksi, "SELECT * FROM user WHERE
+                        username = '$username' AND password = '$password'
+                        LIMIT 1");
+    
+$user = mysqli_fetch_assoc($query);
 
-    $user = mysqli_fetch_assoc($query);
+if(mysqli_num_rows($query) == 1){
+    $_SESSION['username'] = $user['username'];
+    $_SESSION['id_user'] = $user['id_user'];
 
-    if(mysqli_num_rows($query) == 1){
-        $_SESSION['id_user'] = $user['id_user']; 
-        $_SESSION['username'] = $user['username']; 
-        $_SESSION['email'] = $user['email']; 
+    header("location:index.php?login_berhasil!");
+    exit;
 
-        header("location:index.php?berhasil_login");
-        exit;
-    }else{
-        header("location:login.php?gagal_login");
-        exit;
-        alert("Login Gagal");
-    }
-
+}else{
+    header("location:login.php?login_gagal!");
+    exit;
 }
-
+    
 
 
 ?>

@@ -1,5 +1,5 @@
 <?php
 
-$koneksi = mysqli_connect('localhost', 'root', '', 'db_todo');
+$koneksi = mysqli_connect('localhost', 'root', '', 'db_todolist_app');
 
 ?>

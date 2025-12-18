@@ -4,30 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>login</title>
+    <title>daftar</title>
 </head>
 <body>
-    <?php include 'navbar.php'?>
     <main>
-        <div class="">
-            <section class = "container-mid">
+        <div>
+            <section class="container-mid">
                 <header class = "form-title">
-                    <h1>Login</h1>
+                    <h1>Register</h1>
                 </header>
 
                 <article class = "form">
-                    <form action="proses_login.php" method="POST">
+                    <form action="proses_daftar.php" method="POST">
                         <label for="">Username</label><br>
                         <input type="text" name="username" id=""><br>
-                        <br>
+
                         <label for="">Password</label><br>
                         <input type="password" name="password" id=""><br>
+                        
+                        <label for="">Name</label><br>
+                        <input type="text" name="name" id=""><br>
+
+                        <label for="">Email</label><br>
+                        <input type="email" name="email" id=""><br>
+
+                        <label for="">Birth date</label><br>
+                        <input type="date" name="birth_date" id=""><br>
+
                         <br>
-                        <input type="submit" value="Login" class = "btn-primary"><br>
+                        <input type="submit" value="Register" class = "btn-success"><br>
                         <br>
                     </form>
                 </article class = "form-footer">
-                    <center><small>Belum punya akun? <a href="daftar.php">Daftar dulu</a></small></center>
+                    <center><small>Sudah Punya Akun? <a href="login.php">Login</a></small></center>
                 <article>
 
                 </article>
