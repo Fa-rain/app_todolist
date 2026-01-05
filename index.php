@@ -4,54 +4,62 @@ include 'koneksi.php';
 
 if(!isset($_SESSION['id_user'])){
     header("location:login.php?login_dulu!");
+    exit;
 }
 
 $id_user = $_SESSION['id_user'];
 
-if(isset($_GET['filter-category']) && isset($_GET['filter-status'])){ // ada inputan dari filter category & status
+/* ======================
+   QUERY DASAR
+====================== */
+$sql = "
+    SELECT t.*, c.category
+    FROM todo t
+    JOIN category c ON t.id_category = c.id_category
+    WHERE t.id_user = '$id_user'
+";
 
-    $id_category = $_GET['filter-category'];
-    $status = $_GET['filter-status'];
+$conditions = [];
 
-    if(isset($_GET['filter-bookmark'])){ # ---> kalau ada inputan dari filter bookmark
-        $isFavorite = $_GET['filter-bookmark'];
-    }else { # ---> jika tidak,
-        $isFavorite = 0;
-    }
-
- 
-
-    if($id_category != '' && $status != ''){ # --->  dipilih, makeduanyaka menampilkan spesifik
-        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-        t.id_category = c.id_category  WHERE id_user = '$id_user' AND t.id_category = '$id_category' AND status = '$status' AND isFavorite = '$isFavorite'";
-        
-    }elseif ($id_category == '' && $status != ''){ # --> category tidak dipilih maka output tidak memandang category
-        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND status = '$status' AND isFavorite = '$isFavorite'";
-
-    }elseif ($status == '' && $id_category != '') { # --> status tidak dipilih maka output tidak memandang status
-        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND t.id_category = '$id_category' AND isFavorite = '$isFavorite'";
-
-
-    }elseif ($id_category == '' && $status == '') { # --> kedua tidak dipilih, maka output menampilkan semuanya
-        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-        t.id_category = c.id_category WHERE t.id_user = '$id_user' AND isFavorite = '$isFavorite'";
-
-    }else {
-        $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-        t.id_category = c.id_category WHERE id_user = '$id_user'";  
-    }
-    
-}else{
-    $sql = "SELECT t.*, category FROM todo t JOIN category c ON
-    t.id_category = c.id_category WHERE id_user = '$id_user'";
+/* ======================
+   FILTER CATEGORY
+====================== */
+if(!empty($_GET['filter-category'])){
+    $conditions[] = "t.id_category = '{$_GET['filter-category']}'";
 }
 
+/* ======================
+   FILTER STATUS
+====================== */
+if(!empty($_GET['filter-status'])){
+    $conditions[] = "t.status = '{$_GET['filter-status']}'";
+}
+
+/* ======================
+   FILTER FAVORITE
+====================== */
+if(isset($_GET['filter-bookmark'])){
+    $conditions[] = "t.isFavorite = 1";
+}
+
+/* ======================
+   GABUNGKAN KONDISI
+====================== */
+if(!empty($conditions)){
+    $sql .= " AND " . implode(" AND ", $conditions);
+}
+
+$sql .= " ORDER BY t.id_todo DESC";
 
 $queryTodo = mysqli_query($koneksi, $sql);
 
+/* ======================
+   DATA LAIN
+====================== */
 $queryCategory = mysqli_query($koneksi, "SELECT * FROM category");
+
+$queryTodo = mysqli_query($koneksi, $sql);
+
 $queryStatus = mysqli_query($koneksi, "SELECT status FROM todo");
 
 ?>
@@ -61,7 +69,7 @@ $queryStatus = mysqli_query($koneksi, "SELECT status FROM todo");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>To Do list</title>
 </head>
 <body>
     <?php include 'navbar.php'?>
@@ -75,21 +83,27 @@ $queryStatus = mysqli_query($koneksi, "SELECT status FROM todo");
                 <div class="filter">
                     
                     <form method="get">
-                        <select name="filter-category">
+                        <select name="filter-category" onchange="this.form.submit()">
                             <option value="">Semua</option>
-                        <?php while($c = mysqli_fetch_assoc($queryCategory)) { ?>
-                            <option value="<?= $c['id_category']?>">
-                            <?= $c['category']?>
-                            </option>
-                        <?php } ?>
+                            <?php while($c = mysqli_fetch_assoc($queryCategory)) { ?>
+                                <option value="<?= $c['id_category']?>"
+                                    <?= ($_GET['filter-category'] ?? '') == $c['id_category'] ? 'selected' : '' ?>>
+                                    <?= $c['category']?>
+                                </option>
+                            <?php } ?>
                         </select>
-                        <select name="filter-status">
+
+                        <select name="filter-status" onchange="this.form.submit()">
                             <option value="">Semua</option>
-                            <option value="pending">Pending</option>
-                            <option value="done">Done</option>
+                            <option value="pending" <?= ($_GET['filter-status'] ?? '') == 'pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="done" <?= ($_GET['filter-status'] ?? '') == 'done' ? 'selected' : '' ?>>Done</option>
                         </select>
-                        <label for="">Favorit</label>
-                        <input type="checkbox" name="filter-bookmark" value= "1">
+
+                        <label>
+                            <input type="checkbox" name="filter-bookmark" value="1"
+                                <?= isset($_GET['filter-bookmark']) ? 'checked' : '' ?> onchange = "this.form.submit()">
+                            Favorit
+                        </label>
                         <input type="submit" value="filter" class = "btn-primary">
                     </form>
                 </div>
@@ -108,7 +122,6 @@ $queryStatus = mysqli_query($koneksi, "SELECT status FROM todo");
                 <article class = "card-<?= $t['status']?>">
                     <div class="card-title">
                         <h3><?= $t['title'] ?></h3>
-                        
                     </div>
                     
                     <hr>

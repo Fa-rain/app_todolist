@@ -71,8 +71,11 @@ nav ul li a{
 
 .nav-right{
     display: flex;
-    align-self: right;
     gap: 30px;
+}
+
+.nav-mid{
+    color: white;
 }
 
 
@@ -177,8 +180,10 @@ nav ul li a{
 }
 
 .card-title{
-    max-height: 30px;
-    overflow:auto;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
 }
 
 .card-title h3{

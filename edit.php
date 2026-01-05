@@ -52,8 +52,8 @@ WHERE id_todo = '$id_todo'");
 
                     <label for="">Status</label><br>
                     <select name="status" id="">
-                        <option value="pending">Pending</option>
-                        <option value="done">Done</option>
+                        <option value="pending" <?=  $t['status'] == 'pending' ? 'selected' : '' ?>>Pending</option>
+                        <option value="done" <?=  $t['status'] == 'done' ? 'selected' : '' ?>>Done</option>
                     </select><br>
                     <br>
 
